@@ -1,8 +1,7 @@
 
+import time
 
 def timer(n):
-    import time
-
     def wrap(f):
         def inner(*args, **kwargs):
             print(f"Running {f.__name__}...")
