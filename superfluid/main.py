@@ -24,9 +24,11 @@ def gross_pitaevskii(m, l):
     x, y, z = np.meshgrid(x, y, z)
 
     # we use a non-normalized gaussian in 3 dimensions
+    # expected values
     x0 = 0
     y0 = 0
     z0 = 0
+    # standard deviations
     sigx = 1
     sigy = 1
     sigz = 1
