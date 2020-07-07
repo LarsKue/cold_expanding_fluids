@@ -13,13 +13,14 @@ def gaussian(x, y, z, x0, y0, z0, sigx, sigy, sigz, amplitude=1.0):
 
 def gross_pitaevskii(m, l):
 
-    def update_func(d, gs, ggs, h):
+    def update_func(_, d):
+        gs, ggs = GridSolver.gradients(d)
         delta_phi = ggs[0][0] + ggs[1][1] + ggs[2][2]
-        return d + h * (1j * delta_phi / (2 * m) - 1j * l * np.abs(d) ** 2 * d / 6)
+        return 1j * delta_phi / (2 * m) - 1j * l * np.abs(d) ** 2 * d / 6
 
-    N = 50
+    N = 100
 
-    x = y = z = np.linspace(-4, 4, N)
+    x = y = z = np.linspace(-8, 8, N)
 
     x, y, z = np.meshgrid(x, y, z)
 
@@ -33,7 +34,7 @@ def gross_pitaevskii(m, l):
     sigy = 1
     sigz = 1
 
-    data = gaussian(x, y, z, x0, y0, z0, sigx, sigy, sigz)
+    data = gaussian(x, y, z, x0, y0, z0, sigx, sigy, sigz).astype(np.complex128)
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection="3d")
@@ -49,12 +50,12 @@ def gross_pitaevskii(m, l):
 
     g = GridSolver(deepcopy(data))
 
-    h = 0.01
-    n = 2560
+    h = 1
+    n = 128
 
     @timer(n)
     def steps():
-        g.step(update_func, h)
+        g.step_rk4(update_func, 0, h)
 
     steps()
 

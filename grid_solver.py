@@ -5,41 +5,72 @@ from utils import np_zero_borders
 
 
 class GridSolver:
-    """
-    This is a finite-difference integrator that takes n-dimensional data as well as a function describing
-    the time derivative and integrates the data numerically, automatically applying default boundary conditions,
-    in order to get a time evolution
-    """
     def __init__(self, data: np.ndarray):
-        """
-        :param data: Initial Dataset
-        """
         self.data = data
-        self.__update_gradients()
 
-    def __update_gradients(self) -> None:
+    def __gradients(self):
+        return GridSolver.gradients(self.data)
+
+    @staticmethod
+    def gradients(data):
         """
         Update the first and second order gradients of the dataset.
         Boundary conditions are that the first order gradient be zero
         :return: None
         """
-        self.gs = np.gradient(self.data)
+        gs = np.gradient(data)
         # boundary conditions and account for 1-d
-        if self.data.ndim == 1:
-            self.gs = np_zero_borders(self.gs)
-            self.ggs = np.gradient(self.gs)
+        if data.ndim == 1:
+            gs = np_zero_borders(gs)
+            ggs = np.gradient(gs)
         else:
-            self.gs = [np_zero_borders(g) for g in self.gs]
-            self.ggs = [np.gradient(g) for g in self.gs]
+            gs = [np_zero_borders(g) for g in gs]
+            ggs = [np.gradient(g) for g in gs]
 
-    def step(self, f: Callable[[np.ndarray, Union[List, np.ndarray], Union[List, np.ndarray], float], np.ndarray], h: Union[float, int]) -> None:
+        return gs, ggs
+
+    def step_euler(self, f: Callable[[Union[float, int], np.ndarray], np.ndarray],
+                   t: Union[float, int], h: Union[float, int]) -> None:
         """
-        Compute one time step on the dataset
-        :param f: The time derivative, taking the dataset, its first and second order gradients
-                    and a time step as arguments, returning the new values for the dataset
+        Compute one time step on the dataset using the forward euler method
+        :param f: The time derivative function, taking the current time and the current dataset as arguments
+        :param t: The current time
         :param h: The time step
         :return: None
         """
-        self.data = f(self.data, self.gs, self.ggs, h)
-        self.__update_gradients()
+        self.data += h * f(t, self.data)
 
+    def solve_euler(self, f: Callable[[Union[float, int], np.ndarray], np.ndarray], n: int, h: Union[float, int], t0=0.0) -> None:
+        """
+        Compute n time steps of length h using the forward euler method
+        See step_euler for details
+        :return: None
+        """
+        for _ in range(n):
+            self.step_euler(f, t0, h)
+            t0 += h
+
+    def step_rk4(self, f: Callable[[Union[float, int], np.ndarray], np.ndarray], t: Union[float, int], h: Union[float, int]) -> None:
+        """
+        Compute one time step of length h on the dataset using Runge-Kutta to 4th order
+        :param f: The time derivative function, taking the current time and the current dataset as arguments
+        :param t: The current time
+        :param h: The time step
+        :return: None
+        """
+        k1 = f(t, self.data)
+        k2 = f(t + h / 2, self.data + h * k1 / 2)
+        k3 = f(t + h / 2, self.data + h * k2 / 2)
+        k4 = f(t + h, self.data + h * k3)
+
+        self.data += h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
+
+    def solve_rk4(self, f: Callable[[Union[float, int], np.ndarray], np.ndarray], n: int, h: Union[float, int], t0=0.0):
+        """
+        Compute n time steps of length h using Runge-Kutta to 4th order
+        See step_rk4 for details
+        :return: None
+        """
+        for _ in range(n):
+            self.step_rk4(f, t0, h)
+            t0 += h
