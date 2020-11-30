@@ -1,10 +1,11 @@
 
 import time
 
+
 def timer(n):
     def wrap(f):
         def inner(*args, **kwargs):
-            print(f"Running {f.__name__}...")
+            print(f"Running {f.__name__} {n} times...")
             start_time = time.perf_counter()
             print(f"\rProgress: {0.0:.2f}%", end="")
             for i in range(n):

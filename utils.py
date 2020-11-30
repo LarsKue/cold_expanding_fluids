@@ -70,6 +70,16 @@ def np_zero_borders(a: np.ndarray) -> np.ndarray:
     return np.array(list(zero_borders(a.tolist())))
 
 
+def rel_error(uv, ev):
+    """
+    Calculate the relative error in an uncertain value to an exact value
+    :param uv: uncertain value
+    :param ev: exact value
+    :return: the relative error between the two
+    """
+    return abs(uv - ev) / max(abs(uv), abs(ev))
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
