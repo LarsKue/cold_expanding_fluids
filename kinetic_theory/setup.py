@@ -2,6 +2,7 @@ import sys
 from setuptools import setup
 import os
 import shutil
+import pathlib
 
 try:
     from setuptools_rust import Binding, RustExtension
@@ -20,6 +21,14 @@ install_requires = []
 
 package_name = "particles"
 
+
+# rust --out-dir feature is currently unstable
+build_path = "build/lib.win-amd64-3.9/" + package_name
+module_path = package_name + "/"
+
+if not os.path.exists(module_path):
+    os.makedirs(module_path)
+
 setup(name=package_name,
       version="0.1.0",
       author="Lars Kuehmichel",
@@ -31,9 +40,7 @@ setup(name=package_name,
       packages=[package_name],
       zip_safe=False)
 
-# rust --out-dir feature is currently unstable
-build_path = "build/lib.win-amd64-3.8/" + package_name
-module_path = package_name + "/"
+
 
 # copy and overwrite the .pyd into the interpreter directory for testing
 shutil.rmtree(module_path)
