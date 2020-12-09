@@ -4,10 +4,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 
-pub fn square<T: std::marker::Copy + std::ops::Mul<T, Output = T>>(x: T) -> T {
-    x * x
-}
-
+/// Checks if two floating point numbers are approximately equal. This is preferred to `a == b`.
+///
 pub fn approx_equal(a: f64, b: f64) -> bool {
     let abs_a = a.abs();
     let abs_b = b.abs();
@@ -29,12 +27,16 @@ pub fn approx_equal(a: f64, b: f64) -> bool {
 /// Times a function with progress reports including an estimation for time remaining
 ///
 /// # Arguments
+///
 /// `n` - Number of times to run the function
+///
 /// `f` - The function, possibly a closure,
-///     taking no arguments, returning a `Result<(), String>`
-pub fn timer<F>(n: usize, mut f: F) -> Result<(), String>
+/// with signature `f() -> Result<(), E>`
+///
+pub fn timer<F, E>(n: usize, mut f: F) -> Result<(), E>
 where
-    F: FnMut() -> Result<(), String> + Send,
+    F: FnMut() -> Result<(), E> + Send,
+    E: From<std::io::Error> + Send + std::fmt::Debug,
 {
     use rayon::join;
     println!("Running...");
@@ -48,7 +50,7 @@ where
     let start_time: std::time::Instant = std::time::Instant::now();
 
     let (a, b) = join(
-        || -> Result<(), String> {
+        || -> Result<(), E> {
             loop {
                 // run f
                 f()?;
@@ -60,7 +62,7 @@ where
             }
             Ok(())
         },
-        || -> Result<(), String> {
+        || -> Result<(), E> {
             loop {
 
                 let i = idx2.load(Ordering::Relaxed);
@@ -80,12 +82,15 @@ where
                     time_remaining.as_millis() as f32 / 1000.0
                 );
                 // need to flush here to display the text
-                stdout().flush().map_err(|e| e.to_string())?;
+                stdout().flush()?;
 
                 // TODO: This thread will continue sleeping even when the function thread has
                 //  already finished executing, possibly resulting in overhead up to 250ms long.
                 //  A possible solution is to send an exit signal to this thread from the function
                 //  thread but this may require the Sync Trait for the function f
+
+                // FIXME: Possible bug when f() errors that this thread will continue looping and sleeping forever
+                //   proposed fix: share result instead of atomic index between threads
 
                 // sleep for a quarter second
                 thread::sleep(std::time::Duration::from_millis(250));
@@ -108,7 +113,9 @@ where
 }
 
 
-
+/// Adjust a number to be within a certain interval.
+/// Values below (above) the lower (upper) bound will be set to the lower (upper) bound.
+///
 pub fn cap(f: f64, min: f64, max: f64) -> f64 {
     if f > max {
         max

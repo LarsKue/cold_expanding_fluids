@@ -39,26 +39,9 @@ impl Vec3 {
     }
 }
 
-// impl<'source> FromPyObject<'source> for Vec3 {
-//     fn extract(obj: &'source PyObjectRef) -> PyResult<Self> {
-//         let gil = Python::acquire_gil();
-//         let py = gil.python();
-//
-//         Ok(
-//             Self {
-//                 x: obj.getattr(py, "x")?.extract(py)?,
-//                 y: obj.getattr(py, "y")?.extract(py)?,
-//                 z: obj.getattr(py, "z")?.extract(py)?
-//             }
-//         )
-//     }
-// }
-
-// impl IntoPy<PyObject> for Vec3 {
-//     fn into_py(self, py: Python<'_>) -> PyObject {
-//         Py::new(py, self).unwrap()
-//     }
-// }
+// typically, you would blanket implement all of these with a macro
+// but I did not want to include more crates and was too lazy to write it myself
+// so here we are with a bunch of copy-pasted definitions to support reference types
 
 impl std::ops::Neg for &Vec3 {
     type Output = Vec3;
