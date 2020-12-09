@@ -21,9 +21,9 @@ install_requires = []
 
 package_name = "particles"
 
+python_version_str = ".".join(map(str, sys.version_info[0:2]))
 
-# rust --out-dir feature is currently unstable
-build_path = "build/lib.win-amd64-3.9/" + package_name
+build_path = "build/lib.win-amd64-" + python_version_str + "/" + package_name
 module_path = package_name + "/"
 
 if not os.path.exists(module_path):
@@ -39,7 +39,6 @@ setup(name=package_name,
                                      args=["--verbose"])],
       packages=[package_name],
       zip_safe=False)
-
 
 
 # copy and overwrite the .pyd into the interpreter directory for testing
